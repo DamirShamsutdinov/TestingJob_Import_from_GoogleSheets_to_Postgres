@@ -1,10 +1,14 @@
 import os.path
-from pprint import pprint
 from config import host, user, password, db_name
-import psycopg2
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 
+from psycopg2 import connect
+from psycopg2.extras import execute_values
+
+from curs import currency_dict
+
+'''Parser Google Sheets API'''
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SERVICE_ACCOUNT_FILE = os.path.join(BASE_DIR, 'credentials.json')
@@ -22,67 +26,54 @@ result = sheet.values().get(spreadsheetId=SAMPLE_SPREADSHEET_ID,
                             range=SAMPLE_RANGE_NAME).execute()
 
 values = result.get('values', [])
-# pprint(values)
-
-# for row in values:
-#     print('%s, %s, %s, %s' % (row[0], row[1], row[2], row[3]))
 
 response = service.spreadsheets().values().get(
     spreadsheetId=SAMPLE_SPREADSHEET_ID,
     majorDimension='ROWS',
     range=SAMPLE_RANGE_NAME
 ).execute()
+data = response['values'][1:]
 
-rows = response['values'][1:]
-# pprint(rows)
-
-"""Connect to exist database"""
-connection = psycopg2.connect(
+'''Import data in Postgres'''
+c = connect(
     host=host,
     user=user,
     password=password,
     database=db_name
 )
-connection.autocommit = True
+cr = c.cursor()
 
-# for row in rows:
-#     st1 = row[0], st2 = row[1], st3 = row[2], st4 = row[3]
+cr.execute(
+    """DROP TABLE test_c;""")
 
-"""CREATE TABLE"""
-# with connection.cursor() as cursor:
-#     cursor.execute(
-#         """CREATE TABLE test_c (
-#         №   integer,
-#         заказ_№ integer,
-#         стоимость_$ integer,
-#         стоимость_РУБ integer,
-#         срок_поставки   date);"""
-#     )
+cr.execute(
+    """
+    create table if not exists test_c(
+            transaction_id int primary key ,
+            order_id int,
+            amount_usd numeric,
+            amount_rub numeric generated always as (amount_usd * %s) stored ,
+            deadlines_delivery date
+    );
+    """,
+    [currency_dict]
+)
 
-col1 = [row[0] for row in rows]
-col2 = [row[1] for row in rows]
-col3 = [row[2] for row in rows]
-col4 = [row[2] * 67 for row in rows]  # курс $ через API вытащю, но пока так
-col5 = [row[3] for row in rows]
-print(col1)
-
-
-"""INSERT data into a table"""
-# with connection.cursor() as cursor:
-#     cursor.execute(
-#         """INSERT INTO test_c
-#         (№, заказ_№, стоимость_$, стоимость_РУБ, срок_поставки)
-#         VALUES (col1, col2, col3, col4, col5);"""
-#     )
-#
-"""UPDATE data into a table"""
-# with connection.cursor() as cursor:
-#     cursor.execute(
-#         """UPDATE test_c
-#         SET № = [i for i in col1];"""
-#     )
-
-# with connection.cursor() as cursor:
-#     cursor.executemany(
-#         """INSERT INTO test_c VALUES(col1, col2, col3, col4, col5);"""
+execute_values(
+    cr,
+    """
+    insert into test_c (transaction_id, order_id, amount_usd, deadlines_delivery)
+       VALUES %s
+            on conflict (transaction_id) do update
+                    set order_id = excluded.order_id,
+                    amount_usd = excluded.amount_usd,
+                    deadlines_delivery = excluded.deadlines_delivery;
+    """,
+    data,
+    template="(%s, %s, %s, to_date(%s::text, 'DD.MM.YYYY'))",
+    page_size=100
+)
+c.commit()
+cr.close()
+c.close()
 
