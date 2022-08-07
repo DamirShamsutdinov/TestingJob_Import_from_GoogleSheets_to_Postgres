@@ -1,6 +1,3 @@
-from pprint import pprint
-import requests
-from bs4 import BeautifulSoup
 from datetime import date
 import urllib.request
 import xml.dom.minidom as minidom
