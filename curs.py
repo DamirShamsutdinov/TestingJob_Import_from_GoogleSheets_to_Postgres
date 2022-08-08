@@ -1,6 +1,8 @@
-from datetime import date
 import urllib.request
 import xml.dom.minidom as minidom
+from datetime import date
+
+import schedule
 
 
 def get_data(xml_url):
@@ -16,10 +18,10 @@ def get_currencies_dictionary(xml_content):
     for node in elements:
         for child in node.childNodes:
             if child.nodeType == 1:
-                if child.tagName == 'Value':
+                if child.tagName == "Value":
                     if child.firstChild.nodeType == 3:
-                        value = float(child.firstChild.data.replace(',', '.'))
-                if child.tagName == 'CharCode':
+                        value = float(child.firstChild.data.replace(",", "."))
+                if child.tagName == "CharCode":
                     if child.firstChild.nodeType == 3:
                         char_code = child.firstChild.data
         currency_dict[char_code] = value
@@ -28,5 +30,5 @@ def get_currencies_dictionary(xml_content):
 
 today = date.today().strftime("%d/%m/%Y")
 url = f"http://www.cbr.ru/scripts/XML_daily.asp?date_req={today}"
-currency_dict = get_currencies_dictionary(get_data(url))['USD']
+currency_dict = get_currencies_dictionary(get_data(url))["USD"]
 # print(currency_dict)
