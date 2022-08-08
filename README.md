@@ -5,10 +5,10 @@
 ![psycopg2 version](https://img.shields.io/badge/psycopg2-2.9-yellowgreen) 
 ![google--api--python--client version](https://img.shields.io/badge/google--api--python--client-2.55-yellowgreen) 
 ![urllib3 version](https://img.shields.io/badge/urllib3-1.26-yellowgreen) 
-![schedule version](https://img.shields.io/badge/schedule-1.1-yellowgreen) 
+![crontab](https://img.shields.io/badge/crontab-grey) 
 
 
-**Исполнено**
+### Выполняемые функции скрипта
 
 1. Получил данные с документа при помощи Google API, сделанного в Google Sheets.
 
@@ -18,48 +18,35 @@
 
    b. Данные для перевода $ в рубли по курсу [ЦБ РФ](https://www.cbr.ru/development/SXML/).
 
-
-**Не выполнил**
-
-3. Скрипт работает постоянно для обеспечения обновления данных в онлайн режиме (необходимо учитывать, что строки в Google Sheets таблицу могут удаляться, добавляться и изменяться).
+3. Скрипт работает постоянно для обеспечения обновления данных в онлайн режиме (Данные Google Sheets могут изменяться. Как и изменяется курс ЦБ).
 <br>
-**К сожалению так и не решил задачу с автозапуском скрипта с помощью *schedule*** 
-<br>
-Можно чз worker на Heroky запустить (читерство), а можно чз Celery попробовать (не было времени).
+Также можно чз worker на Heroky запустить (читерство), а можно чз Celery попробовать (не было времени).
 
-### Инструкция по запуску
-Клонировать репозиторий через терминал bash:
+### Инструкция по запуску скрипта на постоянной основе в Linux
+Команды выполняются в терминале. 
 
+Сначала клонируем репозиторий в необходимое место:
 ```
 git clone https://github.com/DamirShamsutdinov/Import_from_GoogleSheets_to_Postgres.git
 ```
 
-Cоздать и активировать виртуальное окружение:
-
+Необходимо войти в директорию проекта:
 ```
-WIN: python -m venv venv
-MAC: python3 -m venv venv
+cd test_c
 ```
 
+С помощью инструмента **crontab** настраиваем автозапуск скрипта *main*
 ```
-WIN: source venv/scripts/activate
-MAC: source venv/bin/activate
-```
-
-Установить зависимости из файла requirements.txt:
-
-```
-WIN: python -m pip install --upgrade pip
-MAC: python3 -m pip install --upgrade pip
+crontab -e
 ```
 
+Открывается окно VIM, где мы вводим:
 ```
-pip install -r requirements.txt
+* * * * * bash run.sh
 ```
+Далее сохраняем и выходим ":wq"
 
-Запустить скрипт:
+### Итог
+Таким образом скрипт будет выполняться каждую минуту
 
-```
-WIN: python main.py
-MAC: python3 main.py
-```
+
