@@ -1,6 +1,6 @@
 import os.path
+import threading
 import time
-
 import schedule
 
 from config import host, user, password, db_name
@@ -82,18 +82,24 @@ def push_postgres(values):
     c.close()
 
 
-def main():
-    schedule.every().seconds.do(push_postgres, parser_GH())
-    # schedule.every().day.at('17:01').do(push_postgres, parser_GH())
-
-    while True:
-        schedule.run_pending()
+def run_threaded(push_postgres):
+    push_thread = threading.Thread(target=push_postgres)
+    push_thread.start()
 
 
-if __name__ == '__main__':
-    main()
+schedule.every(10).seconds.do(run_threaded, parser_GH)
+# schedule.every().day.at('17:01').do(push_postgres, parser_GH())
+
+while True:
+    schedule.run_pending()
+    time.sleep(1)
+
+
 # Решил настроить автозапуск функций чз schedule
 # В моем понимании кажд.сек(по моим параметрам) должны запускаться функции парсинга
 # И когда я поменял данные в Google Sheets API то они также должны меняться и в БД
 # Нажимаю запрос - проходит успешно, но данные в БД не меняются
 # Пока не решил проблему
+
+
+#
