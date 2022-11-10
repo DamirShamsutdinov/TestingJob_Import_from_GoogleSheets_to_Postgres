@@ -27,12 +27,12 @@
 
 Сначала клонируем репозиторий в необходимое место:
 ```
-git clone https://github.com/DamirShamsutdinov/Import_from_GoogleSheets_to_Postgres.git
+git clone https://github.com/DamirShamsutdinov/TestingJob_Import_from_GoogleSheets_to_Postgres.git
 ```
 
 Необходимо войти в директорию проекта:
 ```
-cd test_c
+cd TestingJob_Import_from_GoogleSheets_to_Postgres
 ```
 
 С помощью инструмента **crontab** настраиваем автозапуск скрипта *main*
